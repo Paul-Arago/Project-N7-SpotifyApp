@@ -2,8 +2,10 @@ import express from 'express';
 import * as crypto from 'crypto';
 import axios from 'axios';
 import querystring from 'querystring';
+
 const app = express();
 const port = 3000;
+
 const client_id = '2c808afcd0df4f5cabf8ca9fd16dec0e';
 const redirect_uri = 'http://localhost:3000/callback';
 var token;
@@ -59,26 +61,21 @@ app.get('/callback', async function (req, res) {
         if(response.status == 200){
             token = response.data.access_token;
         }
+    }
+});
 
-        const getUser = await axios({
-            url: 'https://api.spotify.com/v1/me',
-            method: 'get',
-            headers: { 'Authorization': 'Bearer ' + token }
-        })
-
-        if(getUser.status == 200){
-            console.log(getUser.data);
-        }
-
-        /*res.redirect('https://localhost:5173' +
-        querystring.stringify({
-            response_type: 'code',
-            client_id: client_id,
-            scope: scope,
-            redirect_uri: redirect_uri,
-            state: state
-        })
-    );*/
+app.get('/user', async function(req,res) {
+    console.log("aa");
+    const getUser = await axios({
+        url: 'https://api.spotify.com/v1/me',
+        method: 'get',
+        headers: { 'Authorization': 'Bearer ' + token }
+    })
+    
+    if(getUser.status == 200){
+        users = [{name:'foo'}, {name:"bar"}];
+        res.send(users);
+        //res.send(getUser.data)
     }
 });
 
