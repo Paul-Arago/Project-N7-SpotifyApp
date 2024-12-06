@@ -1,7 +1,6 @@
 import express from 'express';
 import * as crypto from 'crypto';
 import axios from 'axios';
-import querystring from 'querystring';
 import cors from 'cors';
 
 const app = express();
@@ -22,7 +21,7 @@ app.get('/', () => {
 app.get('/login', function (req, res) {
     var state = generateRandomString(16);
     var scope = 'user-read-private user-read-email';
-    res.send('https://accounts.spotify.com/authorize?' + 
+    res.status(200).send('https://accounts.spotify.com/authorize?' + 
     "response_type=code&" +
     "client_id="+client_id+"&" +
     "scope=user-read-private%20user-read-email&" +
@@ -34,7 +33,7 @@ app.get('/callback', async function (req, res) {
     var code = req.query.code || null;
     var state = req.query.state || null;
     if (state === null) {
-        res.redirect('http://localhost:5173/login');
+        res.status(500).redirect('http://localhost:5173/');
     } else {
         const response = await axios({
             url: 'https://accounts.spotify.com/api/token',
@@ -49,12 +48,11 @@ app.get('/callback', async function (req, res) {
                 grant_type: 'authorization_code'
             }
         })
-
-        if(response.status == 200){
-            token = response.data.access_token;
-        }
-
-        res.status(200).redirect("http://localhost:5173/home");
+        .then((tokenRes) => {
+            token = tokenRes.data.access_token;
+            res.status(200).redirect('http://localhost:5173/home');
+        })
+        .catch(() => res.status(500).redirect('http://localhost:5173/'));
     }
 });
 
@@ -63,10 +61,10 @@ app.get('/user', async function(req,res) {
         url: 'https://api.spotify.com/v1/me',
         method: 'get',
         headers: { 'Authorization': 'Bearer ' + token }
-    })
+    }).catch(error => res.status(500).send())
     
     if(getUser.status == 200){
-        res.send(getUser.data)
+        res.status(200).send(getUser.data)
     }
 });
 
