@@ -47,7 +47,7 @@ app.get('/callback', async function (req, res) {
             method: 'post',
             headers: {
                 'content-type': 'application/x-www-form-urlencoded',
-                //Authorization: 'Basic ' + (new Buffer.from(client_id + ':' + "357896baab46459f9929d1de938e3fca").toString('base64'))
+                Authorization: 'Basic ' + (new Buffer.from(client_id + ':' + "357896baab46459f9929d1de938e3fca").toString('base64'))
             },
             params: {
                 code: code,
@@ -60,6 +60,17 @@ app.get('/callback', async function (req, res) {
 
         if(response.status == 200){
             token = response.data.access_token;
+        }
+
+
+        const getUser = await axios({
+            url: 'https://api.spotify.com/v1/me',
+            method: 'get',
+            headers: { 'Authorization': 'Bearer ' + token }
+        })
+        
+        if(getUser.status == 200){
+            console.log(getUser.data);
         }
     }
 });
