@@ -34,10 +34,7 @@ app.get('/callback', async function (req, res) {
     var code = req.query.code || null;
     var state = req.query.state || null;
     if (state === null) {
-        res.redirect('/#' +
-            querystring.stringify({
-                error: 'state_mismatch'
-            }));
+        res.redirect('http://localhost:5173/login');
     } else {
         const response = await axios({
             url: 'https://accounts.spotify.com/api/token',
@@ -57,7 +54,7 @@ app.get('/callback', async function (req, res) {
             token = response.data.access_token;
         }
 
-        res.redirect("http://localhost:5173");
+        res.status(200).redirect("http://localhost:5173/home");
     }
 });
 
