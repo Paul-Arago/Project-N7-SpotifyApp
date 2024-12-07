@@ -64,7 +64,7 @@ app.get('/user', async function(req,res) {
     }).catch(error => res.status(500).send())
     
     if(getUser.status == 200){
-        res.status(200).send(getUser.data)
+        res.status(200).json(getUser.data);
     }
 });
 
