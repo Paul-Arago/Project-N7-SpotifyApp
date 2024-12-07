@@ -17,12 +17,13 @@ import Playlist from './Playlist.vue';
 
 const playlists = ref([]);
 const selectedPlaylist = ref(null);
-const emit = defineEmits(['update:selectedPlaylist']);
+const emit = defineEmits(['update:selectedPlaylist', 'playlistsFetched']);
 
 async function fetchPlaylists() {
   const response = await fetch('/playlists/all');
   if (response.ok) {
     playlists.value = (await response.json()).items;
+    emit('playlistsFetched', playlists.value);
   } else {
     console.error('Failed to fetch playlists');
   }
@@ -43,5 +44,6 @@ onMounted(() => {
   background-color: #292929; /* Change this to your desired background color */
   border-radius: 10px; /* Change this to your desired border radius */
   padding: 10px;
+  margin: 5px;
 }
 </style>

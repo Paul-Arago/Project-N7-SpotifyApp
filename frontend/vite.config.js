@@ -11,6 +11,7 @@ export default defineConfig({
       '/callback': { target: 'http://localhost:3000/', changeOrigin: true, secure: false },
       '/playlists/all': { target: 'http://localhost:3000/', changeOrigin: true, secure: false },
       '/playlists': { target: 'http://localhost:3000/', changeOrigin: true, secure: false, rewrite: (path) => path.replace(/^\/api/, '') },
+      '/playlists/create': { target: 'http://localhost:3000/', changeOrigin: true, secure: false },
       //'/artists': { target: 'http://localhost:3000/', changeOrigin: true, secure: false, rewrite: (path) => path.replace(/^\/api/, '') },
       '/artists': { target: 'http://localhost:3000/', changeOrigin: true, secure: false },
 
