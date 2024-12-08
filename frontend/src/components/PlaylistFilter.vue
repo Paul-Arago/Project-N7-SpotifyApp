@@ -13,6 +13,12 @@ const UserSelectedArtistsFromPlaylist = ref(null);
 const filteredTracks = ref([]);
 const playlistName = ref('');
 
+const props = defineProps({
+   userId: {
+      type: String,
+   },
+})
+
 const emit = defineEmits(['reset-genres']);
 
 async function updateSelectedPlaylist(playlistId) {
@@ -72,12 +78,13 @@ async function createCustomPlaylist() {
   const response = await fetch('/playlists/create', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
+    body: JSON.stringify({ 
       name: playlistName.value,
-      tracks: filteredTracks.value.map(track => track.track)
-    })
+      tracks: filteredTracks.value.map(track => track.track.id),
+      userId: props.userId,
+    }) 
   });
 
   if (response.ok) {
@@ -92,8 +99,9 @@ async function createCustomPlaylist() {
   <Playlists @update:selectedPlaylist="updateSelectedPlaylist" @playlistsFetched="updateUsersPlaylists"/>
   <Genres :genres="genres" @update:selectedGenres="updateSelectedGenres" @reset-genres="resetGenres"/>
   <CustomPlaylist :filteredTracks="filteredTracks"/>
+  <input type="text" @input="(event) => playlistName = event.target.value" 
+  class="text-[#1F1F1F]" placeholder="Nom de la playlist"></input>
   <button @click="createCustomPlaylist">Create Custom Playlist</button>
-
 </template>
 
 <style scoped>
@@ -107,4 +115,5 @@ button {
   font-size: 16px;
   cursor: pointer;
 }
+
 </style>

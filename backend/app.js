@@ -1,9 +1,11 @@
 import express from 'express';
 import * as crypto from 'crypto';
 import axios from 'axios';
+import bodyParser from "body-parser";
 import cors from 'cors';
 
 const app = express();
+app.use(bodyParser());
 const port = 3000;
 app.use(cors())
 const client_id = '2c808afcd0df4f5cabf8ca9fd16dec0e';
@@ -21,21 +23,20 @@ app.get('/', () => {
 app.get('/login', function (req, res) {
     var state = generateRandomString(16);
     var scope = 'ugc-image-upload user-read-playback-state user-modify-playback-state user-read-currently-playing app-remote-control streaming playlist-read-private playlist-read-collaborative playlist-modify-private playlist-modify-public user-follow-modify user-follow-read user-read-playback-position user-top-read user-read-recently-played user-library-modify user-library-read user-read-email user-read-private';
-    res.send('https://accounts.spotify.com/authorize?' + 
-    "response_type=code&" +
-    "client_id="+client_id+"&" +
-    "scope=user-read-private%20user-read-email&" +
-    "redirect_uri="+ redirect_uri + "&" +
-    "state=" + state);
+    res.send('https://accounts.spotify.com/authorize?' +
+        "response_type=code&" +
+        "client_id=" + client_id + "&" +
+        "scope=" + scope + "&" +
+        "redirect_uri=" + redirect_uri + "&" +
+        "state=" + state);
 });
 
 app.get('/logout', function (req, res) {
     token = null;
-    res.send('http://localhost:5173');
-}
-);
+    res.status(200).send('http://localhost:5173');
+});
 
-app.get('/callback', async function (req, res   ) {
+app.get('/callback', async function (req, res) {
     var code = req.query.code || null;
     var state = req.query.state || null;
     if (state === null) {
@@ -54,39 +55,39 @@ app.get('/callback', async function (req, res   ) {
                 grant_type: 'authorization_code'
             }
         })
-        .then((tokenRes) => {
-            token = tokenRes.data.access_token;
-            res.status(200).redirect('http://localhost:5173/home');
-        })
-        .catch(() => res.status(500).redirect('http://localhost:5173/'));
+            .then((tokenRes) => {
+                token = tokenRes.data.access_token;
+                res.status(200).redirect('http://localhost:5173/home');
+            })
+            .catch(() => res.status(500).redirect('http://localhost:5173/'));
     }
 });
 
-app.get('/user', async function(req,res) {
+app.get('/user', async function (req, res) {
     const userResponse = await axios({
         url: 'https://api.spotify.com/v1/me',
         method: 'get',
         headers: { 'Authorization': 'Bearer ' + token }
     }).catch(error => res.status(500).send())
-    
-    if(userResponse.status === 200){
+
+    if (userResponse.status === 200) {
         res.send(userResponse.data)
     }
 });
 
-app.get('/playlists/all', async function(req,res) {
+app.get('/playlists/all', async function (req, res) {
     const playlistResponse = await axios({
         url: 'https://api.spotify.com/v1/users/31n6hfj564vkf7acsirjusqd7qm4/playlists',
         method: 'get',
         headers: { 'Authorization': 'Bearer ' + token }
     })
 
-    if(playlistResponse.status === 200){
+    if (playlistResponse.status === 200) {
         res.send(playlistResponse.data)
     }
 });
 
-app.get('/playlists/:id', async function(req, res) {
+app.get('/playlists/:id', async function (req, res) {
     const playlistId = req.params.id;
     try {
         const playlistResponse = await axios({
@@ -106,7 +107,7 @@ app.get('/playlists/:id', async function(req, res) {
     }
 });
 
-app.get('/artists', async function(req, res) {
+app.get('/artists', async function (req, res) {
     const artistId = req.query.id;
     try {
         const artistResponse = await axios({
@@ -123,5 +124,69 @@ app.get('/artists', async function(req, res) {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+app.post('/playlists/create', async function (req, res) {
+    const name = req.body.name;
+    const userId = req.body.userId;
+    var tracks = req.body.tracks;
+    var playlistUrl = '';
+    var playlistId = '';
+    var fillProcessSuccess = true;
+
+    const createPlaylist = await axios({
+        url: `https://api.spotify.com/v1/users/${userId}/playlists`,
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+        },
+        data: JSON.stringify({
+            name: name
+        })
+    })
+    .then(async response => {
+        playlistId = response.data.id;
+        playlistUrl = response.data.external_urls.spotify;
+    })
+    .catch(() => {
+        res.status(500).json({ error: 'Internal Server Error' });
+    });
+
+    // Maximum 100 tracks in one request
+    tracks = tracks.map(track => "spotify:track:" + track);
+    if (tracks.length < 100) {
+        fillProcessSuccess = fillPlaylist(tracks, playlistId);
+    } else {
+        console.log("enter algo")
+        while (tracks.length > 100 && fillProcessSuccess) {
+            const sendedTracks = tracks.splice(0, 99);
+            console.log("Tracks splice  : " + sendedTracks.length);
+            fillProcessSuccess = fillPlaylist(sendedTracks, playlistId);
+            tracks = tracks.splice(100, tracks.length - 1);
+            console.log("Tracks splice  : " + tracks.length);
+        }
+        fillProcessSuccess = fillProcessSuccess ? fillPlaylist(tracks, playlistId) : false;
+    }
+
+    if (fillProcessSuccess) {
+        res.status(200).send("");
+    }
+});
+
+async function fillPlaylist(tracks, playlistId) {
+    await axios({
+        url: `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
+        method: 'post',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token,
+        },
+        data: JSON.stringify({
+            uris: tracks
+        })
+    })
+    .then(() => {return true})
+    .catch(() => {return false})
+}
 
 app.listen(port, () => { });

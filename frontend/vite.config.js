@@ -14,6 +14,7 @@ export default defineConfig({
       '/playlists/create': { target: 'http://localhost:3000/', changeOrigin: true, secure: false },
       //'/artists': { target: 'http://localhost:3000/', changeOrigin: true, secure: false, rewrite: (path) => path.replace(/^\/api/, '') },
       '/artists': { target: 'http://localhost:3000/', changeOrigin: true, secure: false },
+      '//playlists/create': { target: 'http://localhost:3000/', changeOrigin: true, secure: false },
 
 
     },
