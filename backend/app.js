@@ -89,26 +89,43 @@ app.get('/playlists/all', async function (req, res) {
 
 app.get('/playlists/:id', async function (req, res) {
     const playlistId = req.params.id;
-    try {
+    var offset = 0;
+    var itemsLeft = -1;
+    var tracksRetrieveDone = false;
+    var totalTracks = [];
+    var requestHasFailed = false;
+    while(!tracksRetrieveDone) {
         const playlistResponse = await axios({
             url: `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
             method: 'get',
+            body: JSON.stringify({
+                limit: 100,
+                offset: offset,
+            }),
             headers: { 'Authorization': 'Bearer ' + token }
+        })
+        .then(async (response) => {
+            response.data.items.forEach((track) => {
+                totalTracks.push(track);
+            });
+            offset += 100;
+            itemsLeft = itemsLeft < 0 ? response.data.total-100 : itemsLeft -= 100;
+        })
+        .catch((error) => {
+            console.log(error.status + error.message);
+            requestHasFailed = true;
+            res.status(500).json({ error: 'Internal Server Error' });
         });
-
-        if (playlistResponse.status === 200) {
-            res.json(playlistResponse.data); // Ensure JSON response
-        } else {
-            res.status(playlistResponse.status).json({ error: playlistResponse.statusText });
-        }
-    } catch (error) {
-        console.error("Error fetching playlist:", error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        tracksRetrieveDone = itemsLeft < 0;
+    }
+    if(!requestHasFailed){
+        res.json(totalTracks); // Ensure JSON response
     }
 });
 
 app.get('/artists', async function (req, res) {
-    const artistId = req.query.id;
+    const artistId = req.body.id;
+    console.log('zzzz');
     try {
         const artistResponse = await axios({
             url: `https://api.spotify.com/v1/artists/?ids=${artistId}`,
@@ -157,7 +174,6 @@ app.post('/playlists/create', async function (req, res) {
     if (tracks.length < 100) {
         fillProcessSuccess = fillPlaylist(tracks, playlistId);
     } else {
-        console.log("enter algo")
         while (tracks.length > 100 && fillProcessSuccess) {
             const sendedTracks = tracks.splice(0, 99);
             console.log("Tracks splice  : " + sendedTracks.length);
@@ -185,8 +201,8 @@ async function fillPlaylist(tracks, playlistId) {
             uris: tracks
         })
     })
-    .then(() => {return true})
-    .catch(() => {return false})
+        .then(() => { return true })
+        .catch(() => { return false })
 }
 
 app.listen(port, () => { });

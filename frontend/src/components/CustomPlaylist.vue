@@ -15,7 +15,3 @@ const props = defineProps({
     <Tracks :tracks="filteredTracks.map(track => track.track)" />
   </div>
 </template>
-
-<style scoped>
-/* Add your styles here */
-</style>
