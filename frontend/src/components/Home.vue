@@ -8,7 +8,7 @@
     </div>
 </div>
 
-<button @click="logout()">Logout</button><br>
+<!--<button @click="logout()">Logout</button><br>-->
 
 <PlaylistFilter :userId="userId" />
 
@@ -71,14 +71,16 @@ async function getAllPlaylists() {
   }
 }
 
-async function logout() {
+/*async function logout() {
   try {
     const response = await fetch("/logout");
     if (response.status == 200) {
       localStorage.clear();
       sessionStorage.clear();
-      const url = await response.text();
-      window.location = url;
+      const redirectUrl = await response.json();
+      console.log("response : ", redirectUrl);
+      console.log("url : ", redirectUrl.redirect);
+      window.location = redirectUrl.redirect;
     } else {
       const errorText = await response.text();
       console.error("Failed to logout:", errorText);
@@ -86,7 +88,7 @@ async function logout() {
   } catch (error) {
     console.error("Error during logout:", error);
   }
-}
+}*/
 </script>
 
 <style>

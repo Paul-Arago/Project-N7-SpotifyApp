@@ -98,7 +98,7 @@ async function createCustomPlaylist() {
   <input type="text" @input="(event) => playlistName = event.target.value" 
   class="text-[#1F1F1F] ml-3 mt-5 rounded-lg h-4 md:h-7 lg:h-10
    " placeholder="Nom de la playlist"></input><br/>
-  <button class=" h-4 md:h-8 lg:h-12" @click="createCustomPlaylist">Create Custom Playlist</button>
+  <button class=" h-4 md:h-8 lg:h-12" @click="createCustomPlaylist">Créer la playlist</button>
 </template>
 
 <style scoped>

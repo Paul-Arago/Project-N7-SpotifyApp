@@ -31,10 +31,10 @@ app.get('/login', function (req, res) {
         "state=" + state);
 });
 
-app.get('/logout', function (req, res) {
+/*app.get('/logout', function (req, res) {
     token = null;
-    res.send('http://localhost:5173');
-});
+    res.json({redirect:"http://localhost:5173"});
+});*/
 
 app.get('/callback', async function (req, res) {
     var code = req.query.code || null;
