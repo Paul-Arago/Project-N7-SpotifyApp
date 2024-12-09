@@ -30,21 +30,14 @@ async function updateSelectedPlaylist(playlistId) {
 async function updateGenres(playlistId) {
   const responsePlaylit = await fetch(`/playlists/${playlistId}`);
   if (responsePlaylit.ok) {
+    console.log("OK");
     usersSelectedPlaylist.value = await responsePlaylit.json();
   }
-  //const artistIds = usersSelectedPlaylist.value.flatMap(item => item.track.artists.map(artist => artist.id));
-  const artistIds = usersSelectedPlaylist.value.map(item => item.track.artists.map(artist => artist.id));
+  console.log(usersSelectedPlaylist.value);
+  const artistIds = usersSelectedPlaylist.value.items.flatMap(item => item.track.artists.map(artist => artist.id));
+  //const artistIds = usersSelectedPlaylist.value.map(item => item.track.artists.map(artist => artist.id));
   const uniqueArtistIds = [...new Set(artistIds)];
-  const responseArtists = await fetch(`/artists`, {
-   method: 'POST',
-   headers: {
-      "Content-Type": "application/json",
-   },
-   body: JSON.stringify({
-    id: uniqueArtistIds.join(",")
-   }),
-  });
-  //const responseArtists = await fetch(`/artists?id=${uniqueArtistIds.join(",")}`);
+  const responseArtists = await fetch(`/artists?id=${uniqueArtistIds.join(",")}`);
   if (responseArtists.ok) {
     UserSelectedArtistsFromPlaylist.value = await responseArtists.json();
   }
@@ -73,9 +66,7 @@ function updateCustomPlaylist() {
       return artistData ? artistData.genres : [];
     });
     return trackGenres.some(genre => selectedGenresSet.has(genre));
-    
   });
-  console.log(filteredTracks);
 }
 
 function resetGenres() {

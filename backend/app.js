@@ -33,7 +33,7 @@ app.get('/login', function (req, res) {
 
 app.get('/logout', function (req, res) {
     token = null;
-    res.status(200).send('http://localhost:5173');
+    res.send('http://localhost:5173');
 });
 
 app.get('/callback', async function (req, res) {
@@ -89,43 +89,25 @@ app.get('/playlists/all', async function (req, res) {
 
 app.get('/playlists/:id', async function (req, res) {
     const playlistId = req.params.id;
-    var offset = 0;
-    var itemsLeft = -1;
-    var tracksRetrieveDone = false;
-    var totalTracks = [];
-    var requestHasFailed = false;
-    while(!tracksRetrieveDone) {
+    try {
         const playlistResponse = await axios({
             url: `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
             method: 'get',
-            body: JSON.stringify({
-                limit: 100,
-                offset: offset,
-            }),
             headers: { 'Authorization': 'Bearer ' + token }
         })
-        .then(async (response) => {
-            response.data.items.forEach((track) => {
-                totalTracks.push(track);
-            });
-            offset += 100;
-            itemsLeft = itemsLeft < 0 ? response.data.total-100 : itemsLeft -= 100;
-        })
-        .catch((error) => {
-            console.log(error.status + error.message);
-            requestHasFailed = true;
-            res.status(500).json({ error: 'Internal Server Error' });
-        });
-        tracksRetrieveDone = itemsLeft < 0;
-    }
-    if(!requestHasFailed){
-        res.json(totalTracks); // Ensure JSON response
+        if (playlistResponse.status === 200) {
+            res.json(playlistResponse.data); // Ensure JSON response
+        } else {
+            res.status(playlistResponse.status).json({ error: playlistResponse.statusText });
+        }
+    } catch (error) {
+        console.error("Error fetching playlist:", error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 });
 
 app.get('/artists', async function (req, res) {
-    const artistId = req.body.id;
-    console.log('zzzz');
+    const artistId = req.query.id;
     try {
         const artistResponse = await axios({
             url: `https://api.spotify.com/v1/artists/?ids=${artistId}`,
@@ -148,7 +130,6 @@ app.post('/playlists/create', async function (req, res) {
     var tracks = req.body.tracks;
     var playlistUrl = '';
     var playlistId = '';
-    var fillProcessSuccess = true;
 
     const createPlaylist = await axios({
         url: `https://api.spotify.com/v1/users/${userId}/playlists`,
@@ -161,35 +142,15 @@ app.post('/playlists/create', async function (req, res) {
             name: name
         })
     })
-    .then(async response => {
-        playlistId = response.data.id;
-        playlistUrl = response.data.external_urls.spotify;
-    })
-    .catch(() => {
-        res.status(500).json({ error: 'Internal Server Error' });
-    });
+        .then(async response => {
+            playlistId = response.data.id;
+            playlistUrl = response.data.external_urls.spotify;
+        })
+        .catch(() => {
+            res.status(500).json({ error: 'Internal Server Error' });
+        });
 
-    // Maximum 100 tracks in one request
     tracks = tracks.map(track => "spotify:track:" + track);
-    if (tracks.length < 100) {
-        fillProcessSuccess = fillPlaylist(tracks, playlistId);
-    } else {
-        while (tracks.length > 100 && fillProcessSuccess) {
-            const sendedTracks = tracks.splice(0, 99);
-            console.log("Tracks splice  : " + sendedTracks.length);
-            fillProcessSuccess = fillPlaylist(sendedTracks, playlistId);
-            tracks = tracks.splice(100, tracks.length - 1);
-            console.log("Tracks splice  : " + tracks.length);
-        }
-        fillProcessSuccess = fillProcessSuccess ? fillPlaylist(tracks, playlistId) : false;
-    }
-
-    if (fillProcessSuccess) {
-        res.status(200).send("");
-    }
-});
-
-async function fillPlaylist(tracks, playlistId) {
     await axios({
         url: `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
         method: 'post',
@@ -201,8 +162,8 @@ async function fillPlaylist(tracks, playlistId) {
             uris: tracks
         })
     })
-        .then(() => { return true })
-        .catch(() => { return false })
-}
+    .then(() => res.status(200).send(""))
+    .catch(() => res.status(500).json({ error: 'Internal Server Error' }))
+});
 
 app.listen(port, () => { });
