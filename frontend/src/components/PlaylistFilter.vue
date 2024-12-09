@@ -30,12 +30,9 @@ async function updateSelectedPlaylist(playlistId) {
 async function updateGenres(playlistId) {
   const responsePlaylit = await fetch(`/playlists/${playlistId}`);
   if (responsePlaylit.ok) {
-    console.log("OK");
     usersSelectedPlaylist.value = await responsePlaylit.json();
   }
-  console.log(usersSelectedPlaylist.value);
   const artistIds = usersSelectedPlaylist.value.items.flatMap(item => item.track.artists.map(artist => artist.id));
-  //const artistIds = usersSelectedPlaylist.value.map(item => item.track.artists.map(artist => artist.id));
   const uniqueArtistIds = [...new Set(artistIds)];
   const responseArtists = await fetch(`/artists?id=${uniqueArtistIds.join(",")}`);
   if (responseArtists.ok) {
@@ -99,8 +96,9 @@ async function createCustomPlaylist() {
   <Genres :genres="genres" @update:selectedGenres="updateSelectedGenres" @reset-genres="resetGenres"/>
   <CustomPlaylist :filteredTracks="filteredTracks"/>
   <input type="text" @input="(event) => playlistName = event.target.value" 
-  class="text-[#1F1F1F]" placeholder="Nom de la playlist"></input>
-  <button @click="createCustomPlaylist">Create Custom Playlist</button>
+  class="text-[#1F1F1F] ml-3 mt-5 rounded-lg h-4 md:h-7 lg:h-10
+   " placeholder="Nom de la playlist"></input><br/>
+  <button class=" h-4 md:h-8 lg:h-12" @click="createCustomPlaylist">Create Custom Playlist</button>
 </template>
 
 <style scoped>
